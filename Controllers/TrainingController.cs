@@ -2,6 +2,7 @@ using TrainingServer.Models;
 using TrainingServer.Services;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
+using TrainingServer.Dtos;
 
 namespace TrainingServer.Controllers;
 
@@ -10,10 +11,18 @@ namespace TrainingServer.Controllers;
 public class TrainingController : ControllerBase
 {
     private readonly TrainingService _trainingService;
+    private readonly AreaService _areaService;
+    private readonly SquadronService _squdronService;
 
-    public TrainingController(TrainingService trainingService)
+    public TrainingController(
+        TrainingService trainingService,
+        AreaService areaService,
+        SquadronService squadronService
+    )
     {
         _trainingService = trainingService;
+        _areaService = areaService;
+        _squdronService = squadronService;
     }
 
     [HttpGet]
@@ -33,19 +42,61 @@ public class TrainingController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Post(Training training)
+    public async Task<ActionResult<TrainingDto>> Post([FromBody] CreateTrainingDto training)
     {
-        await _trainingService.CreateAsync(training);
+        if (training.Force != "air" && training.Force != "land")
+        {
+            return BadRequest(String.Format("force '{0}' is not valid", training.Force));
+        }
 
-        return CreatedAtAction(nameof(Get), new { id = training.Id }, training);
+        var area = await _areaService.GetAsync(training.AreaId);
+        var squadron = training.SquadronId == null ? null : await _squdronService.GetAsync(training.SquadronId);
+        if (area == null)
+            return BadRequest("area id not found!");
+
+        var item = new Training
+        {
+            Force = training.Force,
+            CreationTime = DateTime.UtcNow,
+            StartDate = training.StartDate,
+            EndDate = training.EndDate,
+            LastUpdateTime = DateTime.UtcNow,
+            Area = area,
+            System = squadron
+        };
+
+        await _trainingService.CreateAsync(item);
+
+        return CreatedAtAction(nameof(Get), new { id = item.Id }, training);
     }
 
     [HttpPost("many")]
-    public async Task<IActionResult> Post(List<Training> training)
+    public async Task<IActionResult> Post([FromBody] List<CreateTrainingDto> training)
     {
         foreach (var trn in training)
         {
-            await _trainingService.CreateAsync(trn);
+            if (trn.Force != "air" && trn.Force != "land")
+            {
+                return BadRequest(String.Format("force '{0}' is not valid", trn.Force));
+            }
+
+            var area = await _areaService.GetAsync(trn.AreaId);
+            var squadron = await _squdronService.GetAsync(trn.SquadronId);
+            if (area == null || squadron == null)
+                return BadRequest("area id not found!");
+
+            var item = new Training
+            {
+                Force = trn.Force,
+                CreationTime = DateTime.UtcNow,
+                StartDate = trn.StartDate,
+                EndDate = trn.EndDate,
+                LastUpdateTime = DateTime.UtcNow,
+                Area = area,
+                System = squadron
+            };
+
+            await _trainingService.CreateAsync(item);
         }
 
         return NoContent();

@@ -2,6 +2,7 @@ using System.Linq;
 using TrainingServer.Models;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using TrainingServer.Dtos;
 
 namespace TrainingServer.Services;
 
@@ -32,7 +33,6 @@ public class TrainingService
 
     public async Task CreateAsync(Training newTraining)
     {
-        newTraining.CreationTime = DateTime.Now;
         await _trainingCollection.InsertOneAsync(newTraining);
 
         return;

@@ -2,6 +2,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 
 namespace TrainingServer.Models;
 
@@ -15,9 +16,6 @@ public class Training
     public DateTime LastUpdateTime { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
-
-
-    public ObjectId AreaId { get; set; }
-    [BsonIgnore]
     public Area Area { get; set; } = null!;
+    public Squadron System { get; set; } = null!;
 }

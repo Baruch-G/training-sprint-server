@@ -20,6 +20,7 @@ public static class DBConfigSetUp
         var db = CreateMongoDatabase(settings);
         AddMongoDbService<TrainingService, Training>(settings.TrainingCollectionName);
         AddMongoDbService<AreaService, Area>(settings.AreaCollectionName);
+        AddMongoDbService<SquadronService, Squadron>(settings.SquadronCollectionName);
         void AddMongoDbService<TService, TModel>(string collectionName)
         {
             services.AddSingleton(db.GetCollection<TModel>(collectionName));
