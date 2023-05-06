@@ -17,5 +17,7 @@ public class Training
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public Area Area { get; set; } = null!;
-    public Squadron System { get; set; } = null!;
+    public Squadron? System { get; set; } = null!;
+    public User Contact { get; set; } = null!;
+
 }

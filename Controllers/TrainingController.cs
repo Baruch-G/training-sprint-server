@@ -12,17 +12,21 @@ public class TrainingController : ControllerBase
 {
     private readonly TrainingService _trainingService;
     private readonly AreaService _areaService;
+    private readonly UserService _userService;
+
     private readonly SquadronService _squdronService;
 
     public TrainingController(
         TrainingService trainingService,
         AreaService areaService,
-        SquadronService squadronService
+        SquadronService squadronService,
+        UserService userService
     )
     {
         _trainingService = trainingService;
         _areaService = areaService;
         _squdronService = squadronService;
+        _userService = userService;
     }
 
     [HttpGet]
@@ -50,9 +54,17 @@ public class TrainingController : ControllerBase
         }
 
         var area = await _areaService.GetAsync(training.AreaId);
-        var squadron = training.SquadronId == null ? null : await _squdronService.GetAsync(training.SquadronId);
+        var user = await _userService.GetAsync(training.UserId);
+
+        var squadron =
+            training.SquadronId == null
+                ? null
+                : await _squdronService.GetAsync(training.SquadronId);
+
         if (area == null)
             return BadRequest("area id not found!");
+        if (user == null)
+            return BadRequest("user id not found!");
 
         var item = new Training
         {
@@ -62,6 +74,7 @@ public class TrainingController : ControllerBase
             EndDate = training.EndDate,
             LastUpdateTime = DateTime.UtcNow,
             Area = area,
+            Contact = user,
             System = squadron
         };
 
@@ -81,9 +94,15 @@ public class TrainingController : ControllerBase
             }
 
             var area = await _areaService.GetAsync(trn.AreaId);
-            var squadron = await _squdronService.GetAsync(trn.SquadronId);
-            if (area == null || squadron == null)
+            var user = await _userService.GetAsync(trn.UserId);
+            var squadron =
+                trn.SquadronId == null ? null : await _squdronService.GetAsync(trn.SquadronId);
+
+            if (area == null)
                 return BadRequest("area id not found!");
+
+            if (user == null)
+                return BadRequest("user id not found!");
 
             var item = new Training
             {
@@ -93,7 +112,8 @@ public class TrainingController : ControllerBase
                 EndDate = trn.EndDate,
                 LastUpdateTime = DateTime.UtcNow,
                 Area = area,
-                System = squadron
+                System = squadron,
+                Contact = user
             };
 
             await _trainingService.CreateAsync(item);
